@@ -260,6 +260,63 @@ interface Chat {
   lastMessage?: Message,
 }
 
+const isChat = (obj: any): obj is Chat => {
+  return obj && Array.isArray(obj.members);
+};
+
+export const sendMessage = onRequest(async (request, response) => {
+  try {
+    const authorization = request.headers.authorization;
+    const {chatId, content} = request.body;
+    if (!authorization || !authorization.startsWith("Bearer ")) {
+      throw new HttpError(HttpStatuses.unauthorized, "인증 정보를 확인할 수 없습니다.");
+    } else if (!chatId) {
+      throw new HttpError(HttpStatuses.badRequest, "메시지 전송을 위해 채팅 chatId를 전달해주세요.");
+    } else if (!content) {
+      throw new HttpError(HttpStatuses.badRequest, "메시지의 컨텐트를 전달해주세요");
+    } else {
+      const idToken = authorization.split("Bearer ")[1];
+      const auth = admin.auth();
+      const firestore = getFirestore();
+      const decodedIdToken = await auth.verifyIdToken(idToken);
+      const chat = await firestore.collection("chats").doc(chatId).get();
+      if (!chat.exists) {
+        throw new HttpError(HttpStatuses.notFound, `${chatId}에 해당하는 채팅방을 찾을 수 없습니다.`);
+      }
+      const chatData = chat.data();
+      if (!isChat(chatData)) {
+        throw new HttpError(HttpStatuses.unknown, `${chatId}로 가져온 데이터를 처리하는 과정에서 알 수 없는 오류가 발생했습니다.`);
+      }
+      if (!chatData.members.includes(decodedIdToken.uid)) {
+        throw new HttpError(HttpStatuses.forbidden, `${chatId}에 접근할 수 없습니다.`);
+      }
+      const message: Message = {
+        chatId: chatId,
+        sender: decodedIdToken.uid,
+        content: content,
+        sendedAt: Date.now(),
+      };
+      const addedMessage = await firestore.collection("messages").add(message);
+      await firestore.collection("chats").doc(chatId).update({
+        lastMessage: message,
+      });
+      response.status(HttpStatuses.ok.code).json({
+        result: {
+          id: addedMessage.id,
+          ...message,
+        },
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    if (error instanceof HttpError) {
+      response.status(error.code).json({...error});
+    } else {
+      response.sendStatus(HttpStatuses.unknown.code);
+    }
+  }
+});
+
 export const createChat = onRequest(async (request, response) => {
   try {
     const authorization = request.headers.authorization;
