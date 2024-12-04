@@ -1,7 +1,6 @@
 import {onRequest} from "firebase-functions/v2/https";
 import admin from "firebase-admin";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
-import {logger} from "firebase-functions/v2";
 
 admin.initializeApp();
 
@@ -17,7 +16,7 @@ const HttpStatuses = {
   ok: {code: 200, name: "OK"},
   badRequest: {code: 400, name: "BadRequest"},
   unauthorized: {code: 401, name: "Unauthorized"},
-  forbidden: {code: 404, name: "Forbidden"},
+  forbidden: {code: 403, name: "Forbidden"},
   notFound: {code: 404, name: "NotFound"},
   conflict: {code: 409, name: "Conflict"},
   unknown: {code: 500, name: "Unknown"},
@@ -345,7 +344,6 @@ export const createChat = onRequest(async (request, response) => {
       response.status(HttpStatuses.ok.code).json({result: chat});
     }
   } catch (error) {
-    console.error(error);
     if (error instanceof HttpError) {
       response.status(error.code).json({...error});
     } else {
@@ -372,7 +370,7 @@ export const getMessages = onRequest(async (request, response) => {
       if (!isChat(chat)) {
         throw new HttpError(HttpStatuses.unknown, "채팅방 정보를 처리하는데 문제가 발생했습니다.");
       } else if (!chat.members.includes(decodedIdToken.uid)) {
-        throw new HttpError(HttpStatuses.forbidden, "채팅방 정보를 처리하는데 문제가 발생했습니다.");
+        throw new HttpError(HttpStatuses.forbidden, `${chatId} 채팅방의 유저가 아니기 때문에 메시지를 전송할 수 없습니다.`);
       }
 
       const collectionRef = firestore.collection("messages");
@@ -392,7 +390,6 @@ export const getMessages = onRequest(async (request, response) => {
         response.status(HttpStatuses.ok.code).json({nextKey: null, results: []});
       } else {
         const datas = snapshot.docs.slice(0, count).map((doc) => doc.data());
-        console.log(datas);
         response.status(HttpStatuses.ok.code).json({
           nextKey: snapshot.docs.length > count ? snapshot.docs[count].id : null,
           results: datas,
@@ -400,7 +397,6 @@ export const getMessages = onRequest(async (request, response) => {
       }
     }
   } catch (error) {
-    console.log(error);
     if (error instanceof HttpError) {
       response.status(error.code).json({...error});
     } else {
@@ -420,8 +416,6 @@ export const getNewMessages = onRequest(async (request, response) => {
     } else if (!lastNewestSentAt) {
       throw new HttpError(HttpStatuses.badRequest, "신규 메시지 조회에 사용할 마지막 최신 메시지의 시간을 전달하세요.");
     } else {
-      logger.info(authorization);
-      logger.info(request.url);
       const idToken = authorization.split("Bearer ")[1];
       const auth = admin.auth();
       const firestore = getFirestore();
@@ -431,25 +425,22 @@ export const getNewMessages = onRequest(async (request, response) => {
       if (!isChat(chat)) {
         throw new HttpError(HttpStatuses.unknown, "채팅방 정보를 처리하는데 문제가 발생했습니다.");
       } else if (!chat.members.includes(decodedIdToken.uid)) {
-        throw new HttpError(HttpStatuses.forbidden, "채팅방 정보를 처리하는데 문제가 발생했습니다.");
+        throw new HttpError(HttpStatuses.forbidden, `${chatId}의 멤버가 아니기 때문에 메시지를 조회할 수 없습니다.`);
       }
 
       const collectionRef = firestore.collection("messages");
       const query = collectionRef.where("chatId", "==", chatId).orderBy("sentAt", "desc").endBefore(parseInt(lastNewestSentAt as string));
       const snapshot = await query.get();
-      logger.info(`empty : ${snapshot.empty}`);
       if (snapshot.empty) {
         response.status(HttpStatuses.ok.code).json({nextKey: null, results: []});
       } else {
         const datas = snapshot.docs.map((doc) => doc.data());
-        logger.info(datas);
         response.status(HttpStatuses.ok.code).json({
           results: datas,
         });
       }
     }
   } catch (error) {
-    console.log(error);
     if (error instanceof HttpError) {
       response.status(error.code).json({...error});
     } else {
