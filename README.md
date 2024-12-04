@@ -1,19 +1,36 @@
-# Model
-## UserMetadata
+# 1. Model
+## UserResponse
+getMe, updateMe, addFriendByEmail, removeFriendByEmail Functions 응답의 JSON 파싱 객체
 ```dart
-class UserMetadata {
-  DateTime lastSignInTime;
-  UserMetadata({required this.lastSignInTime});
-  factory UserMetadata.fromJson(Map<String, dynamic> json) {
-    DateFormat format = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
-    DateTime dateTime = format.parseUTC(json['lastSignInTime'] as String);
-    return UserMetadata(
-      lastSignInTime: dateTime,
-    );
+class UserResponse {
+  final User user;
+
+  UserResponse({required this.user});
+
+  factory UserResponse.fromJson(Map<String, dynamic> json) {
+    return UserResponse(user: User.fromJson(json['result']));
   }
 }
 ```
-## User
+
+## **UsersResponse**
+getFriends Functions의 JSON 응답을 파싱하는 객체
+```dart
+class UsersResponse {
+  final List<User> users;
+
+  UsersResponse({required this.users});
+
+  factory UsersResponse.fromJson(Map<String, dynamic> json) {
+    var list = json['results'] as List;
+    List<User> users = list.map((i) => User.fromJson(i)).toList();
+    return UsersResponse(users: users);
+  }
+}
+```
+
+## **User**
+Firebase Auth가 제공하는 사용자 정보를 모델링한 데이터 객체
 ```dart
 class User {
   String email;
@@ -36,34 +53,41 @@ class User {
   }
 }
 ```
-
-## UserResponse
+## **UserMetadata**
+Firebase Auth가 제공해주는 사용자 정보 중 User의 metadata 속성을 모델링한 데이터 객체
 ```dart
-class UserResponse {
-  final User user;
-
-  UserResponse({required this.user});
-
-  factory UserResponse.fromJson(Map<String, dynamic> json) {
-    return UserResponse(user: User.fromJson(json['result']));
+class UserMetadata {
+  DateTime lastSignInTime;
+  UserMetadata({required this.lastSignInTime});
+  factory UserMetadata.fromJson(Map<String, dynamic> json) {
+    DateFormat format = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
+    DateTime dateTime = format.parseUTC(json['lastSignInTime'] as String);
+    return UserMetadata(
+      lastSignInTime: dateTime,
+    );
   }
 }
 ```
-## UsersResponse
+## **ChatsResponse**
+getChats Functions의 JSON 응답을 파싱하는 객체
 ```dart
-class UsersResponse {
-  final List<User> users;
+class ChatsResponse {
+  final List<Chat> chats;
+  final String? nextKey;
 
-  UsersResponse({required this.users});
+  ChatsResponse({required this.nextKey, required this.chats});
 
-  factory UsersResponse.fromJson(Map<String, dynamic> json) {
+  factory ChatsResponse.fromJson(Map<String, dynamic> json) {
     var list = json['results'] as List;
-    List<User> users = list.map((i) => User.fromJson(i)).toList();
-    return UsersResponse(users: users);
+    var nextKey = json['nextKey'] != null ? json['nextKey'] as String : null;
+    List<Chat> chats = list.map((i) => Chat.fromJson(i)).toList();
+    return ChatsResponse(nextKey: nextKey, chats: chats);
   }
 }
 ```
-## Chat
+
+## **Chat**
+채팅방 정보를 모델링한 데이터 객체
 ```dart
 class Chat {
   String id;
@@ -94,27 +118,40 @@ class Chat {
           : null,
     );
   }
-
-  String get lastMessageContent => lastMessage?.content ?? '';
 }
 ```
-## Chats
+## **MessageResponse**
+메시지를 전송하는 sendMessage Functions의 JSON 응답을 파싱하는 객체
 ```dart
-class ChatsResponse {
-  final List<Chat> chats;
-  final String? nextKey;
+class MessageResponse {
+  final Message message;
 
-  ChatsResponse({required this.nextKey, required this.chats});
+  MessageResponse({required this.message});
 
-  factory ChatsResponse.fromJson(Map<String, dynamic> json) {
-    var list = json['results'] as List;
-    var nextKey = json['nextKey'] != null ? json['nextKey'] as String : null;
-    List<Chat> chats = list.map((i) => Chat.fromJson(i)).toList();
-    return ChatsResponse(nextKey: nextKey, chats: chats);
+  factory MessageResponse.fromJson(Map<String, dynamic> json) {
+    return MessageResponse(message: Message.fromJson(json['result']));
   }
 }
 ```
-## Message
+## **MessagesResponse**
+getMessages, getNewMessages Functions의 JSON 응답을 파싱하는 객체
+```dart
+class MessagesResponse {
+  final List<Message> messages;
+  final String? nextKey;
+
+  MessagesResponse({required this.nextKey, required this.messages});
+
+  factory MessagesResponse.fromJson(Map<String, dynamic> json) {
+    var list = json['results'] as List;
+    var nextKey = json['nextKey'] != null ? json['nextKey'] as String : null;
+    List<Message> messages = list.map((i) => Message.fromJson(i)).toList();
+    return MessagesResponse(nextKey: nextKey, messages: messages);
+  }
+}
+```
+## **Message**
+MessagesReponse, MessageResponse의 응답으로 전달되는 메시지 정보를 모델링한 데이터 객체
 ```dart
 class Message {
   String id;
@@ -142,35 +179,7 @@ class Message {
   }
 }
 ```
-## MessageResponse
-```dart
-class MessageResponse {
-  final Message message;
-
-  MessageResponse({required this.message});
-
-  factory MessageResponse.fromJson(Map<String, dynamic> json) {
-    return MessageResponse(message: Message.fromJson(json['result']));
-  }
-}
-```
-## MessagesResponse
-```dart
-class MessagesResponse {
-  final List<Message> messages;
-  final String? nextKey;
-
-  MessagesResponse({required this.nextKey, required this.messages});
-
-  factory MessagesResponse.fromJson(Map<String, dynamic> json) {
-    var list = json['results'] as List;
-    var nextKey = json['nextKey'] != null ? json['nextKey'] as String : null;
-    List<Message> messages = list.map((i) => Message.fromJson(i)).toList();
-    return MessagesResponse(nextKey: nextKey, messages: messages);
-  }
-}
-```
-# Protocol
+# 2. Funtions
 ## getMe
 ### **설명**
 `getMe` 함수는 사용자의 인증 정보를 확인하고, 해당 사용자의 정보를 반환하는 Firebase Cloud Function입니다.
@@ -180,6 +189,9 @@ class MessagesResponse {
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
+
+### 에러 응답
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생하는 오류
 
 ## **요청 및 응답 예시**
 ```dart
@@ -205,6 +217,10 @@ UserResponse.fromJson(response.data);
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
+
+### **에러 응답**
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생하는 오류
+- 400 : 변경할 name을 body로 전달하지 않아 발생하는 오류
 
 ## **요청 및 응답 예시**
 ```dart
@@ -232,6 +248,9 @@ UserResponse.fromJson(response.data);
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
 
+### **에러 응답**
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생하는 오류
+
 ## **요청 및 응답 예시**
 ```dart
 final response = await dio.get(
@@ -254,6 +273,12 @@ email에 해당하는 친구를 추가하는 API입니다.
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
+
+### **에러 응답**
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생하는 오류
+- 400 : 추가할 친구의 email을 body로 전달하지 않아 발생하는 오류
+- 404 : email에 해당하는 유저 정보를 확인할 수 없어 발생하는 오류
+- 409 : 이미 친구로 추가된 유저를 다시 추가해 발생하는 오류
 
 ## **요청 및 응답 예시**
 ```dart
@@ -280,6 +305,11 @@ UserResponse.fromJson(response.data);
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
 
+### **에러 응답**
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생하는 오류
+- 400 : 삭제할 친구의 email을 body로 전달하지 않아 발생하는 오류
+- 404 : email에 해당하는 유저 정보를 확인할 수 없거나 친구나 아닌 경우 발생하는 오류
+
 ## **요청 및 응답 예시**
 ```dart
 final response = await dio.post(
@@ -304,6 +334,10 @@ final removedUser = UserResponse.fromJson(response.data)
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
+
+### **에러 응답**
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생하는 오류
+- 404 : 페이지네이션을 위해 startAt으로 전달한 유저 정보를 확인할 수 없어 발생하는 오류
 
 ## **요청 및 응답 예시**
 ```dart
@@ -331,6 +365,12 @@ ChatsResponse.fromJson(response.data);
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
+
+### **에러 응답**
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생하는 오류
+- 400 : 채팅을 시작할 친구의 email이나 채팅방의 title을 body로 전달하지 않아 발생하는 오류
+- 403 : 친구가 아닌 유저와의 채팅방 생성을 시도해 발생한 오류
+- 404 : email에 해당하는 유저 정보를 확인할 수 없어 발생하는 오류
 
 ## **요청 및 응답 예시**
 ```dart
@@ -360,6 +400,12 @@ ChatResponse.fromJson(response.data);
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
 
+### **에러 응답**
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생하는 오류
+- 400 : 메시지 전송을 위한 chatId, content가 없어 발생하는 오류
+- 404 : chatId에 해당하는 채팅방 정보를 확인할 수 없어 발생하는 오류
+- 403 : 메시지를 전송하는 유저가 chatId의 member가 아닌 경우 발생하는 오류
+
 ## **요청 및 응답 예시**
 ```dart
 String chatId; // 전송할 채팅방의 id
@@ -386,6 +432,12 @@ MessageResponse.fromJson(response.data);
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
+
+### **에러 응답**
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생한 오류
+- 400 : chatId를 쿼리 파라미터로 전달하지 않아 발생한 오류
+- 403 : chatId에 해당하는 채팅방의 멤버가 아니기 때문에 메세지 조회할 수 없어 발생한 오류
+- 404 : 페이지네이션을 위해 전달한 startAt에 해당하는 메시지 정보를 확인할 수 없어 발생한 오류
 
 ## **요청 및 응답 예시**
 ```dart
@@ -415,6 +467,11 @@ MessagesResponse.fromJson(response.data);
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
+
+### **에러 응답**
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생한 오류
+- 400 : chatId와 lastNewestSentAt을 쿼리 파라미터로 전달하지 않아 발생한 오류
+- 403 : chatId에 해당하는 채팅방의 멤버가 아니기 때문에 메세지 조회할 수 없어 발생한 오류
 
 ## **요청 및 응답 예시**
 ```dart
