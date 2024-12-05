@@ -1,6 +1,7 @@
 import {onRequest} from "firebase-functions/v2/https";
 import admin from "firebase-admin";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
+import { Message } from "firebase-admin/lib/messaging/messaging-api";
 
 admin.initializeApp();
 
@@ -236,7 +237,7 @@ export const getChats = onRequest(async (request, response) => {
   }
 });
 
-interface Message {
+interface ChatMessage {
   id: string,
   chatId: string,
   sender: string,
@@ -250,12 +251,23 @@ interface Chat {
   members: string[],
   createdAt: number,
   updatedAt: number,
-  lastMessage?: Message,
+  lastMessage?: ChatMessage,
 }
 
 const isChat = (obj: any): obj is Chat => {
   return obj && Array.isArray(obj.members);
 };
+
+type FcmException = {
+  code: string;
+}
+
+function isFcmException(obj: any): obj is FcmException {
+  return (
+    obj &&
+    typeof obj.code === "string"
+  );
+}
 
 export const sendMessage = onRequest(async (request, response) => {
   try {
@@ -279,23 +291,47 @@ export const sendMessage = onRequest(async (request, response) => {
       const chatData = chat.data();
       if (!isChat(chatData)) {
         throw new HttpError(HttpStatuses.unknown, `${chatId}로 가져온 데이터를 처리하는 과정에서 알 수 없는 오류가 발생했습니다.`);
-      }
-      if (!chatData.members.includes(decodedIdToken.uid)) {
+      } else if (!chatData.members.includes(decodedIdToken.uid)) {
         throw new HttpError(HttpStatuses.forbidden, `${chatId}에 접근할 수 없습니다.`);
       }
+
       const newMssageDocRef = firestore.collection("messages").doc();
-      const message: Message = {
+      const chatMessage: ChatMessage = {
         id: newMssageDocRef.id,
         chatId: chatId,
         sender: decodedIdToken.uid,
         content: content,
         sentAt: Date.now(),
       };
-      await newMssageDocRef.set(message);
+      await newMssageDocRef.set(chatMessage);
       await firestore.collection("chats").doc(chatId).update({
-        lastMessage: message,
+        lastMessage: chatMessage,
       });
-      response.status(HttpStatuses.ok.code).json({result: message});
+
+      response.status(HttpStatuses.ok.code).json({result: chatMessage});
+      const pushTokensCollectionRef = firestore.collection("pushTokens");
+      const receiversUids = chatData.members.filter((member) => member !== decodedIdToken.uid);
+      const snapshotPromises = receiversUids.map((uid) => pushTokensCollectionRef.doc(uid).get());
+      snapshotPromises.forEach(async (snapshotPromise, index) => {
+        const snapshot = await snapshotPromise;
+        if ( snapshot.exists ) {
+          const pushToken = snapshot.data();
+          if ( isPushToken(pushToken) && pushToken.value ) {
+            const pushMessage: Message = {
+              token: pushToken.value,
+              notification: {title: "Fluttalk", body: content},
+            };
+            try {
+              await admin.messaging().send(pushMessage);
+            } catch (e) {
+              const receiversUid = receiversUids[index];
+              if (isFcmException(e) && (e.code === "messaging/unregistered" || e.code === "messaging/invalid-argument")) {
+                await pushTokensCollectionRef.doc(receiversUid).delete();
+              }
+            }
+          }
+        }
+      });
     }
   } catch (error) {
     console.error(error);
@@ -440,6 +476,40 @@ export const getNewMessages = onRequest(async (request, response) => {
         });
       }
     }
+  } catch (error) {
+    if (error instanceof HttpError) {
+      response.status(error.code).json({...error});
+    } else {
+      response.sendStatus(HttpStatuses.unknown.code);
+    }
+  }
+});
+
+interface PushToken {
+  value: string;
+}
+
+function isPushToken(obj: any): obj is PushToken {
+  return (obj != null && typeof obj.value === "string");
+}
+
+export const registerPushToken = onRequest(async (request, response) => {
+  try {
+    const authorization = request.headers.authorization;
+    const {pushToken} = request.body;
+    if (!authorization || !authorization.startsWith("Bearer ")) {
+      throw new HttpError(HttpStatuses.unauthorized, "인증 정보를 확인할 수 없습니다.");
+    } else if (!pushToken) {
+      throw new HttpError(HttpStatuses.badRequest, "푸시 메시지 수신에 사용될 pushToken을 전달해주세요");
+    }
+    const idToken = authorization.split("Bearer ")[1];
+    const auth = admin.auth();
+    const decodedIdToken = await auth.verifyIdToken(idToken);
+    const usersPushToken: PushToken = {
+      value: pushToken,
+    };
+    await getFirestore().collection("pushTokens").doc(decodedIdToken.uid).set(usersPushToken);
+    response.sendStatus(HttpStatuses.ok.code);
   } catch (error) {
     if (error instanceof HttpError) {
       response.status(error.code).json({...error});
