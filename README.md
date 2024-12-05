@@ -494,3 +494,34 @@ final response = await dio.get(
 );
 MessagesResponse.fromJson(response.data);
 ```
+
+# registerPushToken
+### **설명**
+로그인한 사용자의 푸시 토큰을 등록하는 API
+
+### **URL**
+[POST] https://registerpushtoken-cwpwobd65q-uc.a.run.app
+
+### **요청 헤더**
+`Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
+
+### **에러 응답**
+- 401 : Authoriziation: Bearer로 토큰을 전달하지 않는 경우 발생한 오류
+- 400 : pushToken을 POST의 body로 전달하지 않아 발생한 오류
+
+## **요청 및 응답 예시**
+```dart
+// 등록할 푸시 토큰
+String pushToken;
+// 응답값 없음
+await dio.post(
+  "https://registerpushtoken-cwpwobd65q-uc.a.run.app",
+  options: Options(
+    headers: {
+      'Authorization': 'Bearer $idToken',
+      'Content-Type': 'application/json'
+    },
+  ),
+  data: { "pushToken": pushToken },
+);
+```
