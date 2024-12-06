@@ -1,7 +1,7 @@
 import {onRequest} from "firebase-functions/v2/https";
 import admin from "firebase-admin";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
-import { Message } from "firebase-admin/lib/messaging/messaging-api";
+import {Message} from "firebase-admin/lib/messaging/messaging-api";
 
 admin.initializeApp();
 
