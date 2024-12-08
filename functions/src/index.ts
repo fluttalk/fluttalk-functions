@@ -1,9 +1,27 @@
 import {onRequest} from "firebase-functions/v2/https";
-import admin from "firebase-admin";
+import admin, {auth} from "firebase-admin";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {Message} from "firebase-admin/lib/messaging/messaging-api";
+import express from "express";
+import {HttpError, HttpStatuses} from "./common/http-error";
+import {UsersMeController} from "./controller/users-me-controller";
+import {FirebaseAuthService} from "./service/firebase-auth-service";
+import {FriendsController} from "./controller/friends-controller";
+import FirebaseFirestoreService from "./service/firebase-firestore-service";
+import {ChatsController} from "./controller/chats-controller";
+
+const app = express();
 
 admin.initializeApp();
+const firebaseAuthService = new FirebaseAuthService(auth());
+const firebaseFirestoreService = new FirebaseFirestoreService(getFirestore());
+const controllers = [
+  new UsersMeController(firebaseAuthService),
+  new FriendsController(firebaseAuthService, firebaseFirestoreService),
+  new ChatsController(firebaseAuthService, firebaseFirestoreService),
+];
+controllers.forEach((controller) => controller.init(app));
+exports.api = onRequest({timeoutSeconds: 10}, app);
 
 interface User {
   friendIds: string[];
@@ -12,30 +30,6 @@ interface User {
 const isUser = (obj: any): obj is User => {
   return obj && Array.isArray(obj.friendIds);
 };
-
-const HttpStatuses = {
-  ok: {code: 200, name: "OK"},
-  badRequest: {code: 400, name: "BadRequest"},
-  unauthorized: {code: 401, name: "Unauthorized"},
-  forbidden: {code: 403, name: "Forbidden"},
-  notFound: {code: 404, name: "NotFound"},
-  conflict: {code: 409, name: "Conflict"},
-  unknown: {code: 500, name: "Unknown"},
-} as const;
-
-type HttpStatus = (typeof HttpStatuses)[keyof typeof HttpStatuses];
-
-class HttpError implements Error {
-  code: number;
-  name: string;
-  message: string;
-  stack?: string | undefined;
-  constructor(status: HttpStatus, message: string) {
-    this.code = status.code;
-    this.name = status.name;
-    this.message = message;
-  }
-}
 
 export const getMe = onRequest(async (request, response) => {
   try {
@@ -133,6 +127,7 @@ export const addFriendByEmail = onRequest(async (request, response) => {
         if (isUser(data) && data.friendIds.includes(friendRecord.uid)) {
           throw new HttpError(HttpStatuses.conflict, "이미 친구로 등록된 유저입니다.");
         }
+        // const value = {friendIds: FieldValue.arrayUnion(friendRecord.uid)};
         await documentRef.update({friendIds: FieldValue.arrayUnion(friendRecord.uid)});
       } else {
         await documentRef.set({friendIds: [friendRecord.uid]});
@@ -216,7 +211,6 @@ export const getChats = onRequest(async (request, response) => {
       }
 
       const snapshot = await query.get();
-      console.log(snapshot.docs.length);
       if (snapshot.empty) {
         response.status(HttpStatuses.ok.code).json({nextKey: null, results: []});
       } else {
@@ -228,7 +222,6 @@ export const getChats = onRequest(async (request, response) => {
       }
     }
   } catch (error) {
-    console.log(error);
     if (error instanceof HttpError) {
       response.status(error.code).json({...error});
     } else {
@@ -334,7 +327,6 @@ export const sendMessage = onRequest(async (request, response) => {
       });
     }
   } catch (error) {
-    console.error(error);
     if (error instanceof HttpError) {
       response.status(error.code).json({...error});
     } else {
