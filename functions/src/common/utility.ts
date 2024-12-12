@@ -11,3 +11,7 @@ export const getBearerToken = (authorizationHeader: string | undefined): string 
     throw new HttpError(HttpStatuses.unauthorized, "인증 정보를 확인할 수 없습니다.");
   }
 };
+
+export const isString = (obj: any): obj is string => {
+  return (obj && typeof obj === "string");
+};

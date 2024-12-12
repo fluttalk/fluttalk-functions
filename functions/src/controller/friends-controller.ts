@@ -1,23 +1,13 @@
 import {HttpError, HttpStatuses} from "../common/http-error";
+import {isUser, User} from "../data/user";
 import {FirebaseAuthService} from "../service/firebase-auth-service";
 import FirebaseFirestoreService from "../service/firebase-firestore-service";
 import {Controller} from "./controller";
 import {Express, RequestHandler} from "express";
 
-export interface User {
-  friendIds: string[];
-}
-
-export const isUser = (obj: any): obj is User => {
-  return obj && Array.isArray(obj.friendIds);
-};
-
 export class FriendsController extends Controller {
-  constructor(
-    private authService: FirebaseAuthService,
-    private storeService: FirebaseFirestoreService,
-  ) {
-    super();
+  constructor(authService: FirebaseAuthService, private storeService: FirebaseFirestoreService) {
+    super(authService);
   }
 
   override init(app: Express) {
@@ -27,16 +17,15 @@ export class FriendsController extends Controller {
   }
 
   private getFriends: RequestHandler = async (request, response) => {
-    this.handleRequest(async () => {
-      const decodedIdToken = await this.authService.verifyIdToken(request.headers.authorization);
-      const user = await this.storeService.get<User>("users", decodedIdToken.uid, isUser);
+    this.handleRequest(request, response, async (userRecord) => {
+      const user = await this.storeService.get<User>("users", userRecord.uid, isUser);
       if ( user != null && user.friendIds.length > 0 ) {
         const friendUsers = await Promise.all(user.friendIds.map((friendId) => this.authService.getUserByUid(friendId)));
         response.status(HttpStatuses.ok.code).json({results: friendUsers});
       } else {
         response.status(HttpStatuses.ok.code).json({results: []});
       }
-    }, response);
+    });
   };
 
   private addFriendByEmail: RequestHandler = async (request, response) => {
@@ -44,7 +33,7 @@ export class FriendsController extends Controller {
     if (!email) {
       throw new HttpError(HttpStatuses.badRequest, "추가할 친구의 이메일을 전달해주세요.");
     }
-    this.handleRequest(async () => {
+    this.handleRequest(request, response, async () => {
       const foundUser = await this.authService.getUserByEmail(email);
       const decodedIdToken = await this.authService.verifyIdToken(request.headers.authorization);
       const user = await this.storeService.get<User>("users", decodedIdToken.uid, isUser);
@@ -59,7 +48,7 @@ export class FriendsController extends Controller {
         await this.storeService.update<User>("users", decodedIdToken.uid, willUpdateFriendIds);
         response.status(HttpStatuses.ok.code).json({result: foundUser});
       }
-    }, response);
+    });
   };
 
   private removeFriendByEmail: RequestHandler = async (request, response) => {
@@ -67,7 +56,7 @@ export class FriendsController extends Controller {
     if (!email) {
       throw new HttpError(HttpStatuses.badRequest, "삭제할 친구의 이메일을 전달해주세요.");
     }
-    this.handleRequest(async () => {
+    this.handleRequest(request, response, async () => {
       const foundUser = await this.authService.getUserByEmail(email);
       const decodedIdToken = await this.authService.verifyIdToken(request.headers.authorization);
       const user = await this.storeService.get<User>("users", decodedIdToken.uid, isUser);
@@ -82,6 +71,6 @@ export class FriendsController extends Controller {
         await this.storeService.update<User>("users", decodedIdToken.uid, willUpdateFriendIds);
         response.status(HttpStatuses.ok.code).json({result: foundUser});
       }
-    }, response);
+    });
   };
 }

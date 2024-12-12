@@ -3,39 +3,13 @@ import {FirebaseAuthService} from "../service/firebase-auth-service";
 import FirebaseFirestoreService from "../service/firebase-firestore-service";
 import {Controller} from "./controller";
 import {Express, RequestHandler} from "express";
-import {isUser} from "./friends-controller";
-
-interface ChatMessage {
-  id: string,
-  chatId: string,
-  sender: string,
-  content: string,
-  sentAt: number,
-}
-
-interface Chat {
-  id: string,
-  title: string,
-  members: string[],
-  createdAt: number,
-  updatedAt: number,
-  lastMessage?: ChatMessage,
-}
-
-const isChat = (obj: any): obj is Chat => {
-  return obj && Array.isArray(obj.members);
-};
-
-function isString(obj: any): obj is string {
-  return (obj && typeof obj === "string");
-}
+import {isString} from "../common/utility";
+import {Chat, isChat} from "../data/chat";
+import {isUser, User} from "../data/user";
 
 export class ChatsController extends Controller {
-  constructor(
-    private authService: FirebaseAuthService,
-    private storeService: FirebaseFirestoreService,
-  ) {
-    super();
+  constructor(authService: FirebaseAuthService, private storeService: FirebaseFirestoreService) {
+    super(authService);
   }
   override init(app: Express) {
     app.get("/chats", this.getChats.bind(this));
@@ -43,9 +17,8 @@ export class ChatsController extends Controller {
   }
   private getChats: RequestHandler = async (request, response) => {
     const {startAt} = request.query;
-    this.handleRequest(async () => {
-      const user = await this.authService.getUser(request.headers.authorization);
-      const pagination = await this.storeService.getPagination(
+    this.handleRequest(request, response, async (user) => {
+      const pagination = await this.storeService.getPage<Chat>(
         "chats",
         {fieldName: "members", opStr: "array-contains", value: user.uid},
         {fieldName: "updatedAt", directionStr: "desc"},
@@ -56,7 +29,7 @@ export class ChatsController extends Controller {
         nextKey: pagination?.nextKey,
         results: pagination?.results,
       });
-    }, response);
+    });
   };
 
   private postChats: RequestHandler = async (request, response) => {
@@ -66,9 +39,9 @@ export class ChatsController extends Controller {
     } else if (!title) {
       throw new HttpError(HttpStatuses.badRequest, "채팅방의 이름을 전달해주세요.");
     }
-    this.handleRequest(async () => {
-      const user = await this.authService.getUser(request.headers.authorization);
+    this.handleRequest(request, response, async (userRecord) => {
       const otherUser = await this.authService.getUserByEmail(email);
+      const user = await this.storeService.get<User>("users", userRecord.uid, isUser);
       if (!isUser(user) || !user.friendIds.includes(otherUser.uid)) {
         throw new HttpError(HttpStatuses.forbidden, `${email}유저와의 친구가 아닙니다.`);
       }
@@ -77,12 +50,12 @@ export class ChatsController extends Controller {
       const chat: Chat = {
         id: willCreateChatDocumentRef.id,
         title: title,
-        members: [user.uid, otherUser.uid],
+        members: [userRecord.uid, otherUser.uid],
         createdAt: now,
         updatedAt: now,
       };
-      await this.storeService.update("chats", chat.id, chat);
+      await this.storeService.update<Chat>("chats", chat.id, chat);
       response.status(HttpStatuses.ok.code).json({result: chat});
-    }, response);
+    });
   };
 }

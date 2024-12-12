@@ -1,4 +1,4 @@
-import {DocumentReference, DocumentSnapshot, Firestore, OrderByDirection, WhereFilterOp} from "firebase-admin/firestore";
+import {DocumentReference, Firestore, OrderByDirection, WhereFilterOp} from "firebase-admin/firestore";
 import {HttpError, HttpStatuses} from "../common/http-error";
 
 interface FirestoreWhere {
@@ -12,9 +12,9 @@ interface FirestoreOrder {
   directionStr?: OrderByDirection,
 }
 
-interface PaginationResult<T> {
+interface Page<T> {
   nextKey: string | null,
-  results: T[]
+  results: T[],
 }
 
 export default class FirebaseFirestoreService {
@@ -36,7 +36,8 @@ export default class FirebaseFirestoreService {
       throw new HttpError(HttpStatuses.unknown, `${collection}/${document} 경로에 데이터를 처리할 수 없습니다.`);
     }
   }
-  async getPagination<T>(collection: string, where: FirestoreWhere, order: FirestoreOrder, converter: (obj: any) => obj is T, startAt?: string): Promise<PaginationResult<T> | undefined> {
+
+  async getPage<T>(collection: string, where: FirestoreWhere, order: FirestoreOrder, typeGuard: (obj: any) => obj is T, startAt?: string): Promise<Page<T>> {
     const collectionRef = this.firestore.collection(collection);
     const count = 100;
     let query = collectionRef.where(where.fieldName, where.opStr, where.value).orderBy(order.fieldName, order.directionStr).limit(count + 1);
@@ -50,13 +51,35 @@ export default class FirebaseFirestoreService {
     }
     const snapshot = await query.get();
     if (snapshot.empty) {
-      return {nextKey: null, results: []};
+      const empty: Page<T> = {
+        nextKey: null, results: [],
+      };
+      return empty;
     } else {
-      const datas = snapshot.docs.slice(0, count).map((doc) => doc.data()).filter((data) => converter(data));
-      return {
+      const datas = snapshot.docs
+        .slice(0, count)
+        .map((doc) => doc.data())
+        .map((data) => typeGuard(data) ? data : null)
+        .filter(Boolean) as T[];
+
+      const page: Page<T> = {
         nextKey: snapshot.docs.length > count ? snapshot.docs[count].id : null,
         results: datas,
       };
+      return page;
+    }
+  }
+  async getLatestAtBefore<T>(collection: string, where: FirestoreWhere, order: FirestoreOrder, converter: (obj: any) => T, beforeValue: any): Promise<T[]> {
+    const collectionRef = this.firestore.collection(collection);
+    const query = collectionRef.where(where.fieldName, where.opStr, where.value).orderBy(order.fieldName, order.directionStr).endBefore(beforeValue);
+    const snapshot = await query.get();
+    if (snapshot.empty) {
+      return [];
+    } else {
+      return snapshot.docs
+        .map((doc) => doc.data())
+        .map((data) => converter(data) ? data : null)
+        .filter(Boolean) as T[];
     }
   }
 
@@ -68,5 +91,9 @@ export default class FirebaseFirestoreService {
     } else {
       await documentRef.set({...partial});
     }
+  }
+
+  delete(collection: string, document: string) {
+    this.firestore.collection(collection).doc(document);
   }
 }
