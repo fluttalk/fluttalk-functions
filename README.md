@@ -186,6 +186,7 @@ class Message {
 
 ### **URL**
 [GET] https://getme-cwpwobd65q-uc.a.run.app
+[GET] https://api-cwpwobd65q-uc.a.run.app/users/me
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -214,6 +215,7 @@ UserResponse.fromJson(response.data);
 
 ### **URL**
 [POST] https://updateme-cwpwobd65q-uc.a.run.app
+[POST] https://api-cwpwobd65q-uc.a.run.app/users/me
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -244,6 +246,7 @@ UserResponse.fromJson(response.data);
 
 ### **URL**
 [GET] https://getfriends-cwpwobd65q-uc.a.run.app
+[GET] https://api-cwpwobd65q-uc.a.run.app/friends
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -270,6 +273,7 @@ UsersResponse.fromJson(response.data);
 email에 해당하는 친구를 추가하는 API입니다.
 ### **URL**
 [POST] https://addfriendbyemail-cwpwobd65q-uc.a.run.app
+[POST] https://api-cwpwobd65q-uc.a.run.app/friends/add
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -301,6 +305,7 @@ UserResponse.fromJson(response.data);
 
 ### **URL**
 [POST] https://removefriendbyemail-cwpwobd65q-uc.a.run.app
+[POST] https://api-cwpwobd65q-uc.a.run.app/friends/remove
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -331,6 +336,7 @@ final removedUser = UserResponse.fromJson(response.data)
 
 ### **URL**
 [GET] https://getchats-cwpwobd65q-uc.a.run.app
+[GET] https://api-cwpwobd65q-uc.a.run.app/chats
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -362,6 +368,7 @@ ChatsResponse.fromJson(response.data);
 
 ### **URL**
 [POST] https://createchats-cwpwobd65q-uc.a.run.app
+[POST] https://api-cwpwobd65q-uc.a.run.app/chats
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -396,6 +403,7 @@ ChatResponse.fromJson(response.data);
 
 ### **URL**
 [POST] https://sendmessage-cwpwobd65q-uc.a.run.app
+[POST] https://api-cwpwobd65q-uc.a.run.app/messages
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -429,6 +437,7 @@ MessageResponse.fromJson(response.data);
 
 ### **URL**
 [GET] https://getmessages-cwpwobd65q-uc.a.run.app
+[GET] https://api-cwpwobd65q-uc.a.run.app/messages
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -464,6 +473,7 @@ MessagesResponse.fromJson(response.data);
 
 ### **URL**
 [GET] https://getnewmessages-cwpwobd65q-uc.a.run.app
+[GET] https://api-cwpwobd65q-uc.a.run.app/messages/latest
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -501,6 +511,7 @@ MessagesResponse.fromJson(response.data);
 
 ### **URL**
 [POST] https://registerpushtoken-cwpwobd65q-uc.a.run.app
+[POST] https://api-cwpwobd65q-uc.a.run.app/pushTokens
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
