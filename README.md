@@ -185,8 +185,8 @@ class Message {
 `getMe` 함수는 사용자의 인증 정보를 확인하고, 해당 사용자의 정보를 반환하는 Firebase Cloud Function입니다.
 
 ### **URL**
-[GET] https://getme-cwpwobd65q-uc.a.run.app
-[GET] https://api-cwpwobd65q-uc.a.run.app/users/me
+- [GET] https://getme-cwpwobd65q-uc.a.run.app
+- [GET] https://api-cwpwobd65q-uc.a.run.app/users/me
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -214,8 +214,8 @@ UserResponse.fromJson(response.data);
 사용자의 이름을 업데이트하는 API입니다. 성공적으로 업데이트되면, 업데이트된 사용자 정보를 포함한 응답을 반환합니다.
 
 ### **URL**
-[POST] https://updateme-cwpwobd65q-uc.a.run.app
-[POST] https://api-cwpwobd65q-uc.a.run.app/users/me
+- [POST] https://updateme-cwpwobd65q-uc.a.run.app
+- [POST] https://api-cwpwobd65q-uc.a.run.app/users/me
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -245,8 +245,8 @@ UserResponse.fromJson(response.data);
 사용자의 친구 목록을 반환하는 API입니다.
 
 ### **URL**
-[GET] https://getfriends-cwpwobd65q-uc.a.run.app
-[GET] https://api-cwpwobd65q-uc.a.run.app/friends
+- [GET] https://getfriends-cwpwobd65q-uc.a.run.app
+- [GET] https://api-cwpwobd65q-uc.a.run.app/friends
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -272,8 +272,8 @@ UsersResponse.fromJson(response.data);
 ### **설명**
 email에 해당하는 친구를 추가하는 API입니다.
 ### **URL**
-[POST] https://addfriendbyemail-cwpwobd65q-uc.a.run.app
-[POST] https://api-cwpwobd65q-uc.a.run.app/friends/add
+- [POST] https://addfriendbyemail-cwpwobd65q-uc.a.run.app
+- [POST] https://api-cwpwobd65q-uc.a.run.app/friends/add
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -304,8 +304,8 @@ UserResponse.fromJson(response.data);
 등록된 친구 중 email에 해당하는 친구를 제거하는 API
 
 ### **URL**
-[POST] https://removefriendbyemail-cwpwobd65q-uc.a.run.app
-[POST] https://api-cwpwobd65q-uc.a.run.app/friends/remove
+- [POST] https://removefriendbyemail-cwpwobd65q-uc.a.run.app
+- [POST] https://api-cwpwobd65q-uc.a.run.app/friends/remove
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -335,8 +335,8 @@ final removedUser = UserResponse.fromJson(response.data)
 유저가 참여하고 있는 채팅방 목록을 페이지네이션으로 반환하는 API
 
 ### **URL**
-[GET] https://getchats-cwpwobd65q-uc.a.run.app
-[GET] https://api-cwpwobd65q-uc.a.run.app/chats
+- [GET] https://getchats-cwpwobd65q-uc.a.run.app
+- [GET] https://api-cwpwobd65q-uc.a.run.app/chats
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -367,8 +367,8 @@ ChatsResponse.fromJson(response.data);
 친구의 이메일과 채팅방의 타이틀로 1:1 채팅방을 생성하는 API
 
 ### **URL**
-[POST] https://createchats-cwpwobd65q-uc.a.run.app
-[POST] https://api-cwpwobd65q-uc.a.run.app/chats
+- [POST] https://createchats-cwpwobd65q-uc.a.run.app
+- [POST] https://api-cwpwobd65q-uc.a.run.app/chats
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -402,8 +402,8 @@ ChatResponse.fromJson(response.data);
 채팅방으로 메시지를 전송하는 API
 
 ### **URL**
-[POST] https://sendmessage-cwpwobd65q-uc.a.run.app
-[POST] https://api-cwpwobd65q-uc.a.run.app/messages
+- [POST] https://sendmessage-cwpwobd65q-uc.a.run.app
+- [POST] https://api-cwpwobd65q-uc.a.run.app/messages
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -436,8 +436,8 @@ MessageResponse.fromJson(response.data);
 채팅방의 메시지를 페이지네이션으로 조회하는 api
 
 ### **URL**
-[GET] https://getmessages-cwpwobd65q-uc.a.run.app
-[GET] https://api-cwpwobd65q-uc.a.run.app/messages
+- [GET] https://getmessages-cwpwobd65q-uc.a.run.app
+- [GET] https://api-cwpwobd65q-uc.a.run.app/messages
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -472,8 +472,8 @@ MessagesResponse.fromJson(response.data);
 채팅방의 최신 메시지를 조회하는 API
 
 ### **URL**
-[GET] https://getnewmessages-cwpwobd65q-uc.a.run.app
-[GET] https://api-cwpwobd65q-uc.a.run.app/messages/latest
+- [GET] https://getnewmessages-cwpwobd65q-uc.a.run.app
+- [GET] https://api-cwpwobd65q-uc.a.run.app/messages/latest
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -510,8 +510,8 @@ MessagesResponse.fromJson(response.data);
 로그인한 사용자의 푸시 토큰을 등록하는 API
 
 ### **URL**
-[POST] https://registerpushtoken-cwpwobd65q-uc.a.run.app
-[POST] https://api-cwpwobd65q-uc.a.run.app/pushTokens
+- [POST] https://registerpushtoken-cwpwobd65q-uc.a.run.app
+- [POST] https://api-cwpwobd65q-uc.a.run.app/pushTokens
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
