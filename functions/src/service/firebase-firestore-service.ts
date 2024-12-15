@@ -20,10 +20,6 @@ interface Page<T> {
 export default class FirebaseFirestoreService {
   constructor(private firestore: Firestore) {}
 
-  async create(collection: string): Promise<DocumentReference> {
-    return this.firestore.collection(collection).doc();
-  }
-
   async get<T>(collection: string, document: string, converter: (obj: any) => obj is T): Promise<T | undefined> {
     const documentSnapshot = await this.firestore.collection(collection).doc(document).get();
     if (!documentSnapshot.exists) {
@@ -81,6 +77,10 @@ export default class FirebaseFirestoreService {
         .map((data) => converter(data) ? data : null)
         .filter(Boolean) as T[];
     }
+  }
+
+  async create(collection: string): Promise<DocumentReference> {
+    return this.firestore.collection(collection).doc();
   }
 
   async update<T>(collection: string, document: string, partial: Partial<T>) {

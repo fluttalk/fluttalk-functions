@@ -2,15 +2,13 @@ import {DecodedIdToken} from "firebase-admin/lib/auth/token-verifier";
 import {HttpError, HttpStatuses} from "../common/http-error";
 import {Auth, UserRecord} from "firebase-admin/auth";
 import {getBearerToken} from "../common/utility";
-import admin from "firebase-admin";
 
 export class FirebaseAuthService {
   constructor(private auth: Auth) {}
   verifyIdToken(authorizationHeader: string | undefined): Promise<DecodedIdToken> {
     try {
-      const auth = admin.auth();
       const bearerToken = getBearerToken(authorizationHeader);
-      return auth.verifyIdToken(bearerToken);
+      return this.auth.verifyIdToken(bearerToken);
     } catch (error) {
       throw new HttpError(HttpStatuses.unauthorized, "토큰이 유효하지 않습니다.");
     }
