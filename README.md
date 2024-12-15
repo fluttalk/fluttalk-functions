@@ -274,6 +274,7 @@ email에 해당하는 친구를 추가하는 API입니다.
 ### **URL**
 - [POST] https://addfriendbyemail-cwpwobd65q-uc.a.run.app
 - [POST] https://api-cwpwobd65q-uc.a.run.app/friends/add
+- [POST] https://api-cwpwobd65q-uc.a.run.app/friends
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
@@ -306,6 +307,7 @@ UserResponse.fromJson(response.data);
 ### **URL**
 - [POST] https://removefriendbyemail-cwpwobd65q-uc.a.run.app
 - [POST] https://api-cwpwobd65q-uc.a.run.app/friends/remove
+- [DELETE] https://api-cwpwobd65q-uc.a.run.app/friends
 
 ### **요청 헤더**
 `Authorization`: Bearer 토큰 형식으로 사용자의 인증 정보를 포함해야 합니다.
