@@ -12,6 +12,9 @@ export class FriendsController extends Controller {
 
   override init(app: Express) {
     app.get("/friends", this.getFriends.bind(this));
+    app.post("/friends", this.addFriendByEmail.bind(this));
+    app.delete("/friends", this.removeFriendByEmail.bind(this));
+    // POST, DELETE 메소드로 /friends api로 전달하기 이전의 api
     app.post("/friends/add", this.addFriendByEmail.bind(this));
     app.post("/friends/remove", this.removeFriendByEmail.bind(this));
   }
