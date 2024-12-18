@@ -5,21 +5,28 @@ import FirebaseFirestoreService from "../service/firebase-firestore-service";
 import {Controller} from "./controller";
 import {Express, RequestHandler} from "express";
 
-export class FriendsController extends Controller {
+export class UsersFriendsController extends Controller {
   constructor(authService: FirebaseAuthService, private storeService: FirebaseFirestoreService) {
     super(authService);
   }
 
   override init(app: Express) {
-    app.get("/friends", this.getFriends.bind(this));
-    app.post("/friends", this.addFriendByEmail.bind(this));
-    app.delete("/friends", this.removeFriendByEmail.bind(this));
     // POST, DELETE 메소드로 /friends api로 전달하기 이전의 api
     app.post("/friends/add", this.addFriendByEmail.bind(this));
     app.post("/friends/remove", this.removeFriendByEmail.bind(this));
+
+    // GET, POST, DELETE 메소드를 사용하도록 api 엔드포인트 추가
+    app.get("/friends", this.getFriends.bind(this));
+    app.post("/friends", this.addFriendByEmail.bind(this));
+    app.delete("/friends", this.removeFriendByEmail.bind(this));
+
+    // users 리소스의 하위로 friends api 엔드포인트 추가
+    app.get("/users/friends", this.getFriends.bind(this));
+    app.post("/users/friends", this.addFriendByEmail.bind(this));
+    app.delete("/users/friends", this.removeFriendByEmail.bind(this));
   }
 
-  private getFriends: RequestHandler = async (request, response) => {
+  protected getFriends: RequestHandler = async (request, response) => {
     this.handleRequest(request, response, async (userRecord) => {
       const user = await this.storeService.get<User>("users", userRecord.uid, isUser);
       if ( user != null && user.friendIds.length > 0 ) {
@@ -31,7 +38,7 @@ export class FriendsController extends Controller {
     });
   };
 
-  private addFriendByEmail: RequestHandler = async (request, response) => {
+  protected addFriendByEmail: RequestHandler = async (request, response) => {
     const {email} = request.body;
     if (!email) {
       throw new HttpError(HttpStatuses.badRequest, "추가할 친구의 이메일을 전달해주세요.");
@@ -54,7 +61,7 @@ export class FriendsController extends Controller {
     });
   };
 
-  private removeFriendByEmail: RequestHandler = async (request, response) => {
+  protected removeFriendByEmail: RequestHandler = async (request, response) => {
     const {email} = request.body;
     if (!email) {
       throw new HttpError(HttpStatuses.badRequest, "삭제할 친구의 이메일을 전달해주세요.");
