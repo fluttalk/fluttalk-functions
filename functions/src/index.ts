@@ -1,5 +1,5 @@
 import {onRequest} from "firebase-functions/v2/https";
-import admin, {auth} from "firebase-admin";
+import admin, {auth, messaging} from "firebase-admin";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {Message} from "firebase-admin/lib/messaging/messaging-api";
 import {HttpError, HttpStatuses} from "./common/http-error";
@@ -11,27 +11,29 @@ import {isFcmException, isPushToken, PushToken} from "./data/push-token";
 import {FirebaseAuthService} from "./service/firebase-auth-service";
 import FirebaseFirestoreService from "./service/firebase-firestore-service";
 import {UsersMeController} from "./controller/users-me-controller";
-import {FriendsController} from "./controller/friends-controller";
 import {ChatsController} from "./controller/chats-controller";
 import {PushTokensController} from "./controller/push-tokens-controller";
 import {Controller} from "./controller/controller";
 import express from "express";
 import {MessagesController} from "./controller/messages-controller";
 import FirebaseMessagingService from "./service/firebase-messaging-service";
+import {UsersFriendsController} from "./controller/users-friends-controller";
 
 admin.initializeApp();
 
-const app = express();
 const firebaseAuthService = new FirebaseAuthService(auth());
 const firebaseFirestoreService = new FirebaseFirestoreService(getFirestore());
-const firebaseMessagingService = new FirebaseMessagingService();
+const firebaseMessagingService = new FirebaseMessagingService(messaging());
+
 const controllers: Controller[] = [
   new UsersMeController(firebaseAuthService),
-  new FriendsController(firebaseAuthService, firebaseFirestoreService),
+  new UsersFriendsController(firebaseAuthService, firebaseFirestoreService),
   new ChatsController(firebaseAuthService, firebaseFirestoreService),
   new PushTokensController(firebaseAuthService, firebaseFirestoreService),
   new MessagesController(firebaseAuthService, firebaseFirestoreService, firebaseMessagingService),
 ];
+
+const app = express();
 controllers.forEach((controller) => controller.init(app));
 export const api = onRequest({timeoutSeconds: 10}, app);
 

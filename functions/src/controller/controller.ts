@@ -4,14 +4,9 @@ import {FirebaseAuthService} from "../service/firebase-auth-service";
 import {UserRecord} from "firebase-admin/auth";
 
 export abstract class Controller {
-  constructor(
-    protected authService: FirebaseAuthService,
-  ) {}
+  constructor(protected authService: FirebaseAuthService) {}
   abstract init(app: Express): void;
-
-  protected async handleRequest(
-    request: Request,
-    response: Response,
+  protected async handleRequest(request: Request, response: Response,
     handler: (user: UserRecord) => Promise<void>
   ) {
     try {
