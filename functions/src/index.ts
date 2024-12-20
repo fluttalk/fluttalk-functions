@@ -1,5 +1,5 @@
 import {onRequest} from "firebase-functions/v2/https";
-import admin, {auth} from "firebase-admin";
+import admin, {auth, messaging} from "firebase-admin";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {Message} from "firebase-admin/lib/messaging/messaging-api";
 import {HttpError, HttpStatuses} from "./common/http-error";
@@ -23,7 +23,7 @@ admin.initializeApp();
 
 const firebaseAuthService = new FirebaseAuthService(auth());
 const firebaseFirestoreService = new FirebaseFirestoreService(getFirestore());
-const firebaseMessagingService = new FirebaseMessagingService();
+const firebaseMessagingService = new FirebaseMessagingService(messaging());
 
 const controllers: Controller[] = [
   new UsersMeController(firebaseAuthService),
